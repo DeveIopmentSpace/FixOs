@@ -201,6 +201,7 @@ function Start-WindowsOptimization {
             "Microsoft.Todos",
             "Microsoft.Widgets",
             "Microsoft.Windows.Copilot",
+            "Microsoft.WindowsNotepad",
             "Microsoft.Copilot",
             "MicrosoftWindows.Client.WebExperience",
             "Microsoft.SkypeApp",
@@ -1356,72 +1357,73 @@ function Apply-RegistryTweaks {
         exit 1
     }
 
-    # Install Firefox
-    winget install --id Mozilla.Firefox -e --source winget
+    # Install Brave
+    winget install --id Brave.Brave -e --source winget
+
+    # Install VLC Media Player
+    winget install --id VideoLAN.VLC -e --source winget
+
+    # Install NileSoft shell
+    winget install --id nilesoft.shell -e --source winget
+
+    # Install Notepads
+    winget install --id Notepads.Notepads -e --source winget
+
+    # Install Flowlauncher
+    winget install --id Flow.Launcher -e --source winget
 
     return $true
 }
 
 function Install-FixOS {
-    Write-Host "Starting FixOS installation..." 
+    # Progress bar
+    Write-Progress -Activity "Installing FixOS" -Status "Starting..." -PercentComplete 0
     
     
-    Write-Host "`n[1/2] Running Windows optimization..." 
+    Write-Progress -Activity "Installing FixOS" -Status "Running Windows optimization..." -PercentComplete 25
+    Start-Sleep -Milliseconds 100
     $optimizationResult = Start-WindowsOptimization
-    
-    if ($optimizationResult) {
-        Write-Host "  ✓ Windows optimization completed" -ForegroundColor Green
-    } else {
-        Write-Host "  ⚠ Windows optimization had issues" -ForegroundColor Yellow
-    }
-    
-    
-    Write-Host "`n[2/2] Applying Additional tweaks..." 
+
+    Write-Progress -Activity "Installing FixOS" -Status "Applying registry tweaks..." -PercentComplete 50
+    Start-Sleep -Milliseconds 100
     $registryResult = Apply-RegistryTweaks
     
-    if ($registryResult) {
-        Write-Host "  ✓ Additional tweaks applied" -ForegroundColor Green
-    } else {
-        Write-Host "  ⚠ Additional tweaks had issues" -ForegroundColor Yellow
-    }
     
+    Write-Progress -Activity "Installing FixOS" -Status "Cleaning up..." -PercentComplete 75
+    Start-Sleep -Milliseconds 100
     
-    try {
-        Write-Host "`nPerforming final cleanup..." -ForegroundColor Cyan
-
-        $finalRegKeys = @(
-            "HKCU:\Software\Microsoft\OneDrive",
-            "HKCU:\Software\Microsoft\Teams",
-            "HKCU:\Software\Microsoft\XboxApp",
-            "HKLM:\Software\Microsoft\Xbox",
-            "HKLM:\Software\Microsoft\GamingServices",
-            "HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudExperienceHost",
-            "HKCU:\Software\Microsoft\LinkedIn",
-            "HKCU:\Software\Microsoft\Family"
-        )
-        foreach ($regKey in $finalRegKeys) {
-            if (Test-Path $regKey) {
-                Remove-Item -Path $regKey -Recurse -Force -ErrorAction SilentlyContinue
-            }
+    # Clean 
+    $finalRegKeys = @(
+        "HKCU:\Software\Microsoft\OneDrive",
+        "HKCU:\Software\Microsoft\Teams",
+        "HKCU:\Software\Microsoft\XboxApp",
+        "HKLM:\Software\Microsoft\Xbox",
+        "HKLM:\Software\Microsoft\GamingServices",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudExperienceHost",
+        "HKCU:\Software\Microsoft\LinkedIn",
+        "HKCU:\Software\Microsoft\Family"
+    )
+    
+    foreach ($regKey in $finalRegKeys) {
+        if (Test-Path $regKey) {
+            Remove-Item -Path $regKey -Recurse -Force -ErrorAction SilentlyContinue
         }
-
-        Write-Host "  ✓ Installation completed successfully." -ForegroundColor Green
     }
-    catch {
-        Write-Host "`nInstallation completed with some errors." -ForegroundColor Yellow
-        Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor Red
-    }
-
-    Write-Host "`nFixOS installation completed!" -ForegroundColor Green
-    Write-Host "`nPress any key to return to menu..." -ForegroundColor Gray
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     
+    # Finish
+    Write-Progress -Activity "Installing FixOS" -Status "Finishing..." -PercentComplete 100
+    Start-Sleep -Milliseconds 100
+    Write-Progress -Activity "Installing FixOS" -Completed
+    
+    # Done
+    Write-Host "Done"
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Show-Menu
 }
 
 
+# Main execution
 try {
-
     Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force -ErrorAction SilentlyContinue
     
     if ($Install) {
@@ -1429,7 +1431,8 @@ try {
     } else {
         Show-Menu
     }
-} catch {
+} 
+catch {
     Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "Press any key to exit..." -ForegroundColor Gray
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
