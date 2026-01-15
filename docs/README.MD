@@ -24,7 +24,10 @@ FixOs must be run in Admin mode because it performs system-wide tweaks. To achie
 ### Launch Command
 
 ```ps1
-irm "DevelopmentSpace.pages.dev/FixOs.ps1" | iex
+irm "github.com/DeveIopmentSpace/FixOs/raw/Dev/FixOs.ps1" | iex
 ```
 
 If you have Issues, refer to [Known Issues](https://github.com/DeveIopmentSpace/FixOs/issues)
+
+
+> **Note:** You are viewing the **development branch.** Features and changes here are experimental and may not be fully tested. Bugs or instability are possible—use at your own risk!
