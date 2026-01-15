@@ -1,0 +1,19 @@
+# PowerShell specific additions
+*.pssc
+*.psrc
+.vscode/
+.idea/
+
+# Downloaded files
+FixOs-Wallpaper.png
+Microsoft.DesktopAppInstaller.msixbundle
+
+# PowerShell Module folders
+Modules/
+
+# Temporary log files
+*.log
+dism_silent.txt
+dism_silent_err.txt
+sfc_silent.txt
+sfc_silent_err.txt
