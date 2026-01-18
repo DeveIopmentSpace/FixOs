@@ -1,6 +1,6 @@
 # **FixOs**
 
-<img width="1920" height="1080" alt="FixOs" src="https://github.com/user-attachments/assets/cff83eeb-cd19-442a-bf4f-7854e6cf3db6" />
+<img width="1920" height="1080" alt="FixOs" src="https://github.com/DeveIopmentSpace/FixOs/blob/main/assets/wallpaper.png?raw=true" />
 
 
 ## About FixOs
