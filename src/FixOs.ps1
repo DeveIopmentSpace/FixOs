@@ -1,7 +1,7 @@
 <#
 - MORE INFO = https://github.com/DeveIopmentSpace/FixOs
 - NOTES
-    Version: 1.0.1
+    Version: 1.0.2
     Author: Project/Development Space
     Requires: Administrator privileges
 #>
@@ -1363,36 +1363,31 @@ function Apply-RegistryTweaks {
     # Install VLC Media Player
     winget install --id VideoLAN.VLC -e --source winget
 
-    # Install NileSoft shell
-    winget install --id nilesoft.shell -e --source winget
+    # Install NileSoft Shell
+    winget install Nilesoft.Shell -e --source winget
 
     # Install Notepads
-    winget install --id Notepads.Notepads -e --source winget
+    winget install "Notepads App" -e --source winget
 
-    # Install Flowlauncher
-    winget install --id Flow.Launcher -e --source winget
+    # Install Flow Launcher
+    winget install "Flow Launcher" -e --source winget
 
     return $true
 }
 
 function Install-FixOS {
-    # Progress bar
-    Write-Progress -Activity "Installing FixOS" -Status "Starting..." -PercentComplete 0
+    Write-Host "[                    ] 0%" -NoNewline
     
-    
-    Write-Progress -Activity "Installing FixOS" -Status "Running Windows optimization..." -PercentComplete 25
     Start-Sleep -Milliseconds 100
     $optimizationResult = Start-WindowsOptimization
-
-    Write-Progress -Activity "Installing FixOS" -Status "Applying registry tweaks..." -PercentComplete 50
+    Write-Host "`r[####                ] 25%" -NoNewline
+    
     Start-Sleep -Milliseconds 100
     $registryResult = Apply-RegistryTweaks
+    Write-Host "`r[##########          ] 50%" -NoNewline
     
-    
-    Write-Progress -Activity "Installing FixOS" -Status "Cleaning up..." -PercentComplete 75
     Start-Sleep -Milliseconds 100
     
-    # Clean 
     $finalRegKeys = @(
         "HKCU:\Software\Microsoft\OneDrive",
         "HKCU:\Software\Microsoft\Teams",
@@ -1410,19 +1405,17 @@ function Install-FixOS {
         }
     }
     
-    # Finish
-    Write-Progress -Activity "Installing FixOS" -Status "Finishing..." -PercentComplete 100
+    Write-Host "`r[###############     ] 75%" -NoNewline
     Start-Sleep -Milliseconds 100
-    Write-Progress -Activity "Installing FixOS" -Completed
     
-    # Done
+    Write-Host "`r[####################] 100%"
     Write-Host "Done"
+    
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Show-Menu
 }
 
 
-# Main execution
 try {
     Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force -ErrorAction SilentlyContinue
     
@@ -1431,8 +1424,7 @@ try {
     } else {
         Show-Menu
     }
-} 
-catch {
+} catch {
     Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "Press any key to exit..." -ForegroundColor Gray
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
