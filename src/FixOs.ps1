@@ -1412,7 +1412,6 @@ function Install-FixOS {
     Write-Host "Done"
     
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    Show-Menu
 }
 
 
