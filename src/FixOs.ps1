@@ -1367,7 +1367,7 @@ function Apply-RegistryTweaks {
     winget install Nilesoft.Shell -e --source winget
 
     # Install Notepads
-    winget install "Notepads App" -e --source winget
+    winget install --id JackieLiu.NotepadsApp --source winget
 
     # Install Flow Launcher
     winget install "Flow Launcher" -e --source winget
