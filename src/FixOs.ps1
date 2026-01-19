@@ -566,7 +566,7 @@ function Start-WindowsOptimization {
     }
 
     function Set-Wallpaper {
-        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/main/FixOs-Standard/Wallpaper.png?raw=true'
+        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/main/assets/wallpaper.png?raw=true'
         $wallPath = Join-Path $env:PUBLIC 'FixOs-Wallpaper.png'
         
         try {
@@ -1338,39 +1338,50 @@ function Apply-RegistryTweaks {
     #                          Programs                        #
     # ======================================================== #
 
-    # Check if winget exists
-    $wingetPath = (Get-Command winget -ErrorAction SilentlyContinue)
+    $ErrorActionPreference = "Stop"
 
-    if (-not $wingetPath) {
-        # Download and install Desktop App Installer (contains winget)
+    # Explicit winget path (more reliable in scripts)
+    $winget = "$env:LOCALAPPDATA\Microsoft\WindowsApps\winget.exe"
+
+    # Ensure winget exists
+    if (-not (Test-Path $winget)) {
         $installerUrl = "https://aka.ms/getwinget"
         $tempFile = "$env:TEMP\Microsoft.DesktopAppInstaller.msixbundle"
 
-        Invoke-WebRequest -Uri $installerUrl -OutFile $tempFile -UseBasicParsing
+        Invoke-WebRequest -Uri $installerUrl -OutFile $tempFile
         Add-AppxPackage -Path $tempFile
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 5
     }
 
-    # Confirm winget is available after installation
-    $wingetPath = (Get-Command winget -ErrorAction SilentlyContinue)
-    if (-not $wingetPath) {
+    # Verify winget again
+    if (-not (Test-Path $winget)) {
+        Write-Error "winget not available"
         exit 1
     }
 
+    # Common silent flags
+    $commonFlags = @(
+        "--exact",
+        "--silent",
+        "--accept-package-agreements",
+        "--accept-source-agreements",
+        "--source", "winget"
+    )
+
     # Install Brave
-    winget install --id Brave.Brave -e --source winget
+    & $winget install --id Brave.Brave @commonFlags
 
     # Install VLC Media Player
-    winget install --id VideoLAN.VLC -e --source winget
+    & $winget install --id VideoLAN.VLC @commonFlags
 
-    # Install NileSoft Shell
-    winget install Nilesoft.Shell -e --source winget
+    # Install Nilesoft Shell
+    & $winget install --id Nilesoft.Shell @commonFlags
 
     # Install Notepads
-    winget install --id JackieLiu.NotepadsApp --source winget
+    & $winget install --id JackieLiu.NotepadsApp @commonFlags
 
     # Install Flow Launcher
-    winget install "Flow Launcher" -e --source winget
+    winget install "Flow Launcher" @commonFlags
 
     return $true
 }
@@ -1409,9 +1420,11 @@ function Install-FixOS {
     Start-Sleep -Milliseconds 100
     
     Write-Host "`r[####################] 100%"
-    Write-Host "Done"
+    Write-Host "Installation finished"
+    Write-Host "Press any key to return to the Menu"
     
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Show-Menu
 }
 
 
