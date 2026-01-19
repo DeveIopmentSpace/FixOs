@@ -565,7 +565,7 @@ function Start-WindowsOptimization {
     }
 
     function Set-Wallpaper {
-        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/main/FixOs-Standard/Wallpaper.png?raw=true'
+        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/main/assets/wallpaper.png?raw=true'
         $wallPath = Join-Path $env:PUBLIC 'FixOs-Wallpaper.png'
         
         try {

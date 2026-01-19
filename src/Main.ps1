@@ -76,6 +76,7 @@ function Start-WindowsOptimization {
             "Microsoft.Todos",
             "Microsoft.Widgets",
             "Microsoft.Windows.Copilot",
+            "Microsoft.WindowsNotepad",
             "Microsoft.Copilot",
             "MicrosoftWindows.Client.WebExperience",
             "Microsoft.SkypeApp",
@@ -140,94 +141,6 @@ function Start-WindowsOptimization {
                     } catch {}
                 }
             }
-        } catch {}
-    }
-
-    function Remove-OneDrive-Completely {
-        try {
-            # Stop OneDrive process
-            Get-Process -Name "*onedrive*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-
-            $oneDrivePaths = @(
-                "C:\Users\Default\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk",
-                "C:\Users\Default\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.exe",
-                "C:\Windows\System32\OneDriveSetup.exe",
-                "C:\Windows\SysWOW64\OneDriveSetup.exe"
-            )
-            
-            foreach ($path in $oneDrivePaths) {
-                if (Test-Path $path) {
-                    try {
-                        Remove-Item $path -Force -ErrorAction SilentlyContinue
-                    } catch {}
-                }
-            }
-            
-            # Uninstall OneDrive
-            $oneDriveSetup = "$env:SYSTEMROOT\SysWOW64\OneDriveSetup.exe"
-            if (Test-Path $oneDriveSetup) {
-                try {
-                    Start-Process $oneDriveSetup "/uninstall" -Wait -ErrorAction SilentlyContinue
-                } catch {}
-            }
-            
-            # Additional OneDrive cleanup from your second script
-            taskkill /f /im OneDrive.exe 2>$null
-
-            if (Test-Path "$env:SystemRoot\System32\OneDriveSetup.exe") {
-                Start-Process "$env:SystemRoot\System32\OneDriveSetup.exe" "/uninstall" -Wait
-            }
-            if (Test-Path "$env:SystemRoot\SysWOW64\OneDriveSetup.exe") {
-                Start-Process "$env:SystemRoot\SysWOW64\OneDriveSetup.exe" "/uninstall" -Wait
-            }
-
-            Remove-Item "$env:UserProfile\OneDrive" -Recurse -Force -ErrorAction SilentlyContinue
-            Remove-Item "$env:LocalAppData\Microsoft\OneDrive" -Recurse -Force -ErrorAction SilentlyContinue
-            Remove-Item "$env:ProgramData\Microsoft OneDrive" -Recurse -Force -ErrorAction SilentlyContinue
-
-            reg delete "HKEY_CLASSES_ROOT\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f 2>$null
-            reg delete "HKEY_CLASSES_ROOT\Wow6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f 2>$null
-            reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v "DisableFileSyncNGSC" /t REG_DWORD /d 1 /f
-        } catch {}
-    }
-
-    function Remove-Teams-Completely {
-        try {
-            # Stop Microsoft Teams processes
-            taskkill /f /im Teams.exe 2>$null
-            taskkill /f /im Update.exe 2>$null
-            taskkill /f /im Squirrel.exe 2>$null
-
-            # Remove Teams for all users
-            Get-ChildItem "C:\Users" | ForEach-Object {
-                $userPath = $_.FullName
-                Remove-Item "$userPath\AppData\Local\Microsoft\Teams" -Recurse -Force -ErrorAction SilentlyContinue
-                Remove-Item "$userPath\AppData\Roaming\Microsoft\Teams" -Recurse -Force -ErrorAction SilentlyContinue
-                Remove-Item "$userPath\AppData\Local\SquirrelTemp" -Recurse -Force -ErrorAction SilentlyContinue
-            }
-
-            # Remove global installation folders
-            Remove-Item "C:\Program Files (x86)\Microsoft\Teams" -Recurse -Force -ErrorAction SilentlyContinue
-            Remove-Item "C:\Program Files\Microsoft\Teams" -Recurse -Force -ErrorAction SilentlyContinue
-
-            # Remove Teams Machine-Wide Installer
-            $installer = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "Teams Machine*" }
-            if ($installer) { $installer.Uninstall() }
-
-            # Remove Teams desktop shortcuts
-            Get-ChildItem "C:\Users" -Recurse -ErrorAction SilentlyContinue | 
-                Where-Object { $_.Name -like "*Microsoft Teams.lnk" } | 
-                Remove-Item -Force -ErrorAction SilentlyContinue
-
-            # Disable Teams auto-start
-            Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Office\Teams" -Name "HomeUserUpn" -ErrorAction SilentlyContinue
-            Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Office\Teams" -Name "IsWVDEnvironment" -ErrorAction SilentlyContinue
-            Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Office\Teams" -Name "LoggedInOnce" -ErrorAction SilentlyContinue
-            Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Office\Teams" -Name "TeamsDesktopAppSetup" -ErrorAction SilentlyContinue
-            Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Office\Teams" -Name "DeadEnd" -ErrorAction SilentlyContinue
-
-            # Prevent Teams reinstall with Office updates
-            reg add "HKLM\SOFTWARE\Policies\Microsoft\Office\16.0\Teams" /v "PreventFirstLaunchAfterInstall" /t REG_DWORD /d 1 /f
         } catch {}
     }
 
@@ -528,7 +441,7 @@ function Start-WindowsOptimization {
     }
 
     function Set-Wallpaper {
-        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/main/FixOs-Standard/Wallpaper.png?raw=true'
+        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/main/assets/wallpaper.png?raw=true'
         $wallPath = Join-Path $env:PUBLIC 'FixOs-Wallpaper.png'
         
         try {
@@ -551,8 +464,6 @@ public class Wallpaper {
     # Execute all optimization steps silently
     Force-Remove-Apps
     Remove-Edge-Completely
-    Remove-OneDrive-Completely
-    Remove-Teams-Completely
     Optimize-Services
     Disable-Telemetry
     Set-Wallpaper
@@ -581,7 +492,7 @@ function Apply-RegistryTweaks {
                 Remove-ItemProperty -Path $Path -Name $Name -Force -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {
-            # Completely silent - no output
+            
         }
     }
 
@@ -593,7 +504,7 @@ function Apply-RegistryTweaks {
                 Remove-Item -Path $Path -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {
-            # Completely silent - no output
+        
         }
     }
 
