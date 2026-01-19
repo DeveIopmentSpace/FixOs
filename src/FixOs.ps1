@@ -1369,16 +1369,16 @@ function Apply-RegistryTweaks {
     )
 
     # Install Brave
-    & $winget install --id Brave.Brave @commonFlags
+    winget install --id Brave.Brave @commonFlags
 
     # Install VLC Media Player
-    & $winget install --id VideoLAN.VLC @commonFlags
+    winget install --id VideoLAN.VLC @commonFlags
 
     # Install Nilesoft Shell
-    & $winget install --id Nilesoft.Shell @commonFlags
+    winget install --id Nilesoft.Shell @commonFlags
 
     # Install Notepads
-    & $winget install --id JackieLiu.NotepadsApp @commonFlags
+    winget install --id JackieLiu.NotepadsApp @commonFlags
 
     # Install Flow Launcher
     winget install "Flow Launcher" @commonFlags
