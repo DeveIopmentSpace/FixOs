@@ -461,7 +461,7 @@ public class Wallpaper {
         } catch {}
     }
 
-    # Execute all optimization steps silently
+    # Execute
     Force-Remove-Apps
     Remove-Edge-Completely
     Optimize-Services
@@ -472,7 +472,7 @@ public class Wallpaper {
 }
 
 function Apply-RegistryTweaks {
-    # Function to force registry operations with error handling
+    
     function Set-RegistryForce {
         param(
             [string]$Path,
@@ -667,8 +667,6 @@ function Apply-RegistryTweaks {
 
     # Block Workplace Join
     Set-RegistryForce -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WorkplaceJoin" -Name "BlockAADWorkplaceJoin" -Type "DWord" -Value 1
-
-    # Apply Current User Settings
 
     # Disable Personalized Content
     $contentDeliveryKeys = @(
@@ -927,7 +925,7 @@ function Apply-RegistryTweaks {
         try {
             Rename-Item -Path $setup -NewName ($setup + ".bak") -ErrorAction Stop
         } catch {
-            # If rename fails (probably in use or not permitted), try to deny execution
+            # If rename fails (probably in use or not permitted) try to deny execution
             try {
                 # Remove all permissions
                 icacls $setup /inheritance:r /deny Everyone:RX 2>&1 | Out-Null
@@ -1058,7 +1056,7 @@ function Apply-RegistryTweaks {
         }
     }
 
-    # Remove Start Menu shortcuts (Teams, LinkedIn, Family, Dev Home, Xbox) robustly
+    # Remove Start Menu shortcuts (Teams, LinkedIn, Family, Dev Home, Xbox) 
 
     $shortcutPatterns = @(
         "*Teams*.lnk",
@@ -1208,6 +1206,3 @@ function Apply-RegistryTweaks {
     } catch {
 
     }
-
-    return $true
-}
