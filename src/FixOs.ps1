@@ -585,7 +585,7 @@ public class Wallpaper {
         } catch {}
     }
 
-    # Execute all optimization steps silently
+    # Execute 
     Force-Remove-Apps
     Remove-Edge-Completely
     Optimize-Services
@@ -596,7 +596,7 @@ public class Wallpaper {
 }
 
 function Apply-RegistryTweaks {
-    # Function to force registry operations with error handling
+   
     function Set-RegistryForce {
         param(
             [string]$Path,
@@ -791,8 +791,6 @@ function Apply-RegistryTweaks {
 
     # Block Workplace Join
     Set-RegistryForce -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WorkplaceJoin" -Name "BlockAADWorkplaceJoin" -Type "DWord" -Value 1
-
-    # Apply Current User Settings
 
     # Disable Personalized Content
     $contentDeliveryKeys = @(
