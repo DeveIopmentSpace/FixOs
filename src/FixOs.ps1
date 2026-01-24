@@ -1381,7 +1381,7 @@ function Apply-RegistryTweaks {
     # Install Flow Launcher
     winget install "Flow Launcher" @commonFlags
 
-    # Install VsCode
+    # Install Fastfetch
     winget install fastfetch @commonFlags
 
     return $true
