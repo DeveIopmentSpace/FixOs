@@ -81,7 +81,7 @@ function Show-Menu {
         " ╚═╝     ╚═╝╚═╝  ╚═╝  ╚═════╝ ╚══════╝ ",
         "                                       ",
         "                                       ",
-        " © 2026 DevSpace. All rights reserved. ",
+        " © 2026 Devspace. All rights reserved. ",
         "                                       "
     )
 
