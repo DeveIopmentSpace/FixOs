@@ -1,0 +1,7 @@
+{
+    "version": "1.0.0",
+    "autoUpdate": true,
+    "logLevel": "INFO",
+    "enableNotifications": true,
+    "backupPath": "./Backup"
+}
