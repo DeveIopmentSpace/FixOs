@@ -34,6 +34,28 @@ function Start-WindowsOptimization {
         } catch { return $false }
     }
 
+    function Create-ToolboxShortcut {
+        try {
+            $desktopPath = [Environment]::GetFolderPath("Desktop")
+            $shortcutPath = Join-Path $desktopPath "Toolbox.lnk"
+            
+            $toolboxUrl = "https://raw.githubusercontent.com/DeveIopmentSpace/FixOs/dev/Toolbox/src/Toolbox.ps1"
+            
+            $WshShell = New-Object -ComObject WScript.Shell
+            $Shortcut = $WshShell.CreateShortcut($shortcutPath)
+            $Shortcut.TargetPath = "wt.exe"
+            $Shortcut.Arguments = "-p `"Windows PowerShell`" -d `"$env:USERPROFILE`" powershell -Command `"irm '$toolboxUrl' | iex`""
+            $Shortcut.WorkingDirectory = "$env:USERPROFILE"
+            $Shortcut.Description = "FixOs Toolbox"
+            $Shortcut.IconLocation = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe,0"
+            $Shortcut.Save()
+            
+            return $true
+        } catch {
+            return $false
+        }
+    }
+
     # Main optimization functions
     function Force-Remove-Apps {
         $appsToRemove = @(
@@ -441,7 +463,7 @@ function Start-WindowsOptimization {
     }
 
     function Set-Wallpaper {
-        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/main/assets/wallpaper.png?raw=true'
+        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/dev/assets/wallpaper-dev.png?raw=true'
         $wallPath = Join-Path $env:PUBLIC 'FixOs-Wallpaper.png'
         
         try {
@@ -467,6 +489,7 @@ public class Wallpaper {
     Optimize-Services
     Disable-Telemetry
     Set-Wallpaper
+    Create-ToolboxShortcut
     
     return $true
 }
@@ -1206,3 +1229,58 @@ function Apply-RegistryTweaks {
     } catch {
 
     }
+
+    # ======================================================== #
+    #                          Programs                        #
+    # ======================================================== #
+
+    $ErrorActionPreference = "Stop"
+
+    # Explicit winget path (more reliable in scripts)
+    $winget = "$env:LOCALAPPDATA\Microsoft\WindowsApps\winget.exe"
+
+    # Ensure winget exists
+    if (-not (Test-Path $winget)) {
+        $installerUrl = "https://aka.ms/getwinget"
+        $tempFile = "$env:TEMP\Microsoft.DesktopAppInstaller.msixbundle"
+
+        Invoke-WebRequest -Uri $installerUrl -OutFile $tempFile
+        Add-AppxPackage -Path $tempFile
+        Start-Sleep -Seconds 5
+    }
+
+    # Verify winget again
+    if (-not (Test-Path $winget)) {
+        Write-Error "winget not available"
+        exit 1
+    }
+
+    # Common silent flags
+    $commonFlags = @(
+        "--exact",
+        "--silent",
+        "--accept-package-agreements",
+        "--accept-source-agreements",
+        "--source", "winget"
+    )
+
+    # Install Brave
+    winget install --id Brave.Brave @commonFlags
+
+    # Install VLC Media Player
+    winget install --id VideoLAN.VLC @commonFlags
+
+    # Install Nilesoft Shell
+    winget install --id Nilesoft.Shell @commonFlags
+
+    # Install Notepads
+    winget install JackieLiu.NotepadsApp @commonFlags
+
+    # Install Flow Launcher
+    winget install "Flow Launcher" @commonFlags
+
+    # Install Fastfetch
+    winget install fastfetch @commonFlags
+
+    return $true
+}
