@@ -1,7 +1,7 @@
 <#
-- MORE INFO = https://github.com/DeveIopmentSpace/FixOs
+- MORE INFO = https://github.com/DeveIopmentSpace/FixOs/tree/dev
 - NOTES
-    Version: 1.0.2
+    Version: 2.0.1
     Author: Project/Development Space
     Requires: Administrator privileges
 #>
