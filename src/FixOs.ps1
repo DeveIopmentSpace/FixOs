@@ -1,7 +1,7 @@
 <#
 - MORE INFO = https://github.com/DeveIopmentSpace/FixOs
 - NOTES
-    Version: 1.0.0
+    Version: 1.0.2
     Author: Project/Development Space
     Requires: Administrator privileges
 #>
@@ -159,6 +159,28 @@ function Start-WindowsOptimization {
         } catch { return $false }
     }
 
+    function Create-ToolboxShortcut {
+        try {
+            $desktopPath = [Environment]::GetFolderPath("Desktop")
+            $shortcutPath = Join-Path $desktopPath "Toolbox.lnk"
+            
+            $toolboxUrl = "https://raw.githubusercontent.com/DeveIopmentSpace/FixOs/main/Toolbox/src/Toolbox.ps1"
+            
+            $WshShell = New-Object -ComObject WScript.Shell
+            $Shortcut = $WshShell.CreateShortcut($shortcutPath)
+            $Shortcut.TargetPath = "wt.exe"
+            $Shortcut.Arguments = "-p `"Windows PowerShell`" -d `"$env:USERPROFILE`" powershell -Command `"irm '$toolboxUrl' | iex`""
+            $Shortcut.WorkingDirectory = "$env:USERPROFILE"
+            $Shortcut.Description = "FixOs Toolbox"
+            $Shortcut.IconLocation = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe,0"
+            $Shortcut.Save()
+            
+            return $true
+        } catch {
+            return $false
+        }
+    }
+
     # Main optimization functions
     function Force-Remove-Apps {
         $appsToRemove = @(
@@ -201,6 +223,7 @@ function Start-WindowsOptimization {
             "Microsoft.Todos",
             "Microsoft.Widgets",
             "Microsoft.Windows.Copilot",
+            "Microsoft.WindowsNotepad",
             "Microsoft.Copilot",
             "MicrosoftWindows.Client.WebExperience",
             "Microsoft.SkypeApp",
@@ -585,18 +608,19 @@ public class Wallpaper {
         } catch {}
     }
 
-    # Execute 
+    # Execute
     Force-Remove-Apps
     Remove-Edge-Completely
     Optimize-Services
     Disable-Telemetry
     Set-Wallpaper
+    Create-ToolboxShortcut
     
     return $true
 }
 
 function Apply-RegistryTweaks {
-   
+    
     function Set-RegistryForce {
         param(
             [string]$Path,
@@ -1049,7 +1073,7 @@ function Apply-RegistryTweaks {
         try {
             Rename-Item -Path $setup -NewName ($setup + ".bak") -ErrorAction Stop
         } catch {
-            # If rename fails (probably in use or not permitted), try to deny execution
+            # If rename fails (probably in use or not permitted) try to deny execution
             try {
                 # Remove all permissions
                 icacls $setup /inheritance:r /deny Everyone:RX 2>&1 | Out-Null
@@ -1180,7 +1204,7 @@ function Apply-RegistryTweaks {
         }
     }
 
-    # Remove Start Menu shortcuts (Teams, LinkedIn, Family, Dev Home, Xbox) robustly
+    # Remove Start Menu shortcuts (Teams, LinkedIn, Family, Dev Home, Xbox) 
 
     $shortcutPatterns = @(
         "*Teams*.lnk",
@@ -1335,91 +1359,97 @@ function Apply-RegistryTweaks {
     #                          Programs                        #
     # ======================================================== #
 
-    # Check if winget exists
-    $wingetPath = (Get-Command winget -ErrorAction SilentlyContinue)
+    $ErrorActionPreference = "Stop"
 
-    if (-not $wingetPath) {
-        # Download and install Desktop App Installer (contains winget)
+    # Explicit winget path (more reliable in scripts)
+    $winget = "$env:LOCALAPPDATA\Microsoft\WindowsApps\winget.exe"
+
+    # Ensure winget exists
+    if (-not (Test-Path $winget)) {
         $installerUrl = "https://aka.ms/getwinget"
         $tempFile = "$env:TEMP\Microsoft.DesktopAppInstaller.msixbundle"
 
-        Invoke-WebRequest -Uri $installerUrl -OutFile $tempFile -UseBasicParsing
+        Invoke-WebRequest -Uri $installerUrl -OutFile $tempFile
         Add-AppxPackage -Path $tempFile
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 5
     }
 
-    # Confirm winget is available after installation
-    $wingetPath = (Get-Command winget -ErrorAction SilentlyContinue)
-    if (-not $wingetPath) {
+    # Verify winget again
+    if (-not (Test-Path $winget)) {
+        Write-Error "winget not available"
         exit 1
     }
 
-    # Install Firefox
-    winget install --id Mozilla.Firefox -e --source winget
+    # Common silent flags
+    $commonFlags = @(
+        "--exact",
+        "--silent",
+        "--accept-package-agreements",
+        "--accept-source-agreements",
+        "--source", "winget"
+    )
+
+    # Install Brave
+    winget install --id Brave.Brave @commonFlags
+
+    # Install VLC Media Player
+    winget install --id VideoLAN.VLC @commonFlags
+
+    # Install Nilesoft Shell
+    winget install --id Nilesoft.Shell @commonFlags
+
+    # Install Notepads
+    winget install JackieLiu.NotepadsApp @commonFlags
+
+    # Install Flow Launcher
+    winget install "Flow Launcher" @commonFlags
 
     return $true
 }
 
 function Install-FixOS {
-    Write-Host "Starting FixOS installation..." 
+    Write-Host "[                    ] 0%" -NoNewline
     
-    
-    Write-Host "`n[1/2] Running Windows optimization..." 
+    Start-Sleep -Milliseconds 100
     $optimizationResult = Start-WindowsOptimization
+    Write-Host "`r[####                ] 25%" -NoNewline
     
-    if ($optimizationResult) {
-        Write-Host "  ✓ Windows optimization completed" -ForegroundColor Green
-    } else {
-        Write-Host "  ⚠ Windows optimization had issues" -ForegroundColor Yellow
-    }
-    
-    
-    Write-Host "`n[2/2] Applying Additional tweaks..." 
+    Start-Sleep -Milliseconds 100
     $registryResult = Apply-RegistryTweaks
+    Write-Host "`r[##########          ] 50%" -NoNewline
     
-    if ($registryResult) {
-        Write-Host "  ✓ Additional tweaks applied" -ForegroundColor Green
-    } else {
-        Write-Host "  ⚠ Additional tweaks had issues" -ForegroundColor Yellow
-    }
+    Start-Sleep -Milliseconds 100
     
+    $finalRegKeys = @(
+        "HKCU:\Software\Microsoft\OneDrive",
+        "HKCU:\Software\Microsoft\Teams",
+        "HKCU:\Software\Microsoft\XboxApp",
+        "HKLM:\Software\Microsoft\Xbox",
+        "HKLM:\Software\Microsoft\GamingServices",
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudExperienceHost",
+        "HKCU:\Software\Microsoft\LinkedIn",
+        "HKCU:\Software\Microsoft\Family"
+    )
     
-    try {
-        Write-Host "`nPerforming final cleanup..." -ForegroundColor Cyan
-
-        $finalRegKeys = @(
-            "HKCU:\Software\Microsoft\OneDrive",
-            "HKCU:\Software\Microsoft\Teams",
-            "HKCU:\Software\Microsoft\XboxApp",
-            "HKLM:\Software\Microsoft\Xbox",
-            "HKLM:\Software\Microsoft\GamingServices",
-            "HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudExperienceHost",
-            "HKCU:\Software\Microsoft\LinkedIn",
-            "HKCU:\Software\Microsoft\Family"
-        )
-        foreach ($regKey in $finalRegKeys) {
-            if (Test-Path $regKey) {
-                Remove-Item -Path $regKey -Recurse -Force -ErrorAction SilentlyContinue
-            }
+    foreach ($regKey in $finalRegKeys) {
+        if (Test-Path $regKey) {
+            Remove-Item -Path $regKey -Recurse -Force -ErrorAction SilentlyContinue
         }
-
-        Write-Host "  ✓ Installation completed successfully." -ForegroundColor Green
     }
-    catch {
-        Write-Host "`nInstallation completed with some errors." -ForegroundColor Yellow
-        Write-Host "Error details: $($_.Exception.Message)" -ForegroundColor Red
-    }
-
-    Write-Host "`nFixOS installation completed!" -ForegroundColor Green
-    Write-Host "`nPress any key to return to menu..." -ForegroundColor Gray
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     
+    Write-Host "`r[###############     ] 75%" -NoNewline
+    Start-Sleep -Milliseconds 100
+    
+    Write-Host "`r[####################] 100%"
+    Write-Host "Installation finished"
+    Write-Host "Press any key to return to the Menu"
+    
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     Show-Menu
 }
 
 
 try {
-
     Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force -ErrorAction SilentlyContinue
     
     if ($Install) {
