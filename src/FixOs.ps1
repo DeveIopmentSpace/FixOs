@@ -1,3 +1,11 @@
+<#
+- MORE INFO = https://github.com/DeveIopmentSpace/FixOs/tree/dev
+- NOTES
+    Version: 2.0.2
+    Author: Project/Development Space
+    Requires: Administrator privileges
+#>
+
 param([switch]$Install,[switch]$Silent)
 
 $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
