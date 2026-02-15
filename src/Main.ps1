@@ -1,7 +1,4 @@
-    # ======================================================== #
-    #                    Main optimization                     #
-    # ======================================================== #
-    function Start-WindowsOptimization {
+function Start-WindowsOptimization {
     if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
         Write-Warning "Please run as Administrator"
         return $false
@@ -30,6 +27,15 @@
             Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type $Type -Force
             return $true
         } catch { return $false }
+    }
+
+    function Remove-RegistryKey {
+        param([string]$Path)
+        try {
+            if (Test-Path $Path) {
+                Remove-Item -Path $Path -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        } catch {}
     }
 
     function Create-ToolboxShortcut {
@@ -292,7 +298,8 @@
 
     function Remove-EdgeCompletely {
         try {
-            Get-Process -Name "*edge*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            Stop-Process -Name "*edge*" -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
             $edgePaths = @(
                 "C:\Program Files (x86)\Microsoft\Edge"
                 "C:\Program Files (x86)\Microsoft\EdgeWebView"
@@ -311,6 +318,86 @@
             Remove-RegistryKey -Path "HKLM:\SOFTWARE\Microsoft\EdgeUpdate"
             Remove-RegistryKey -Path "HKCU:\SOFTWARE\Microsoft\Edge"
             Remove-RegistryKey -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
+        } catch {}
+    }
+
+    function Remove-OneDrive {
+        try {
+            Stop-Process -Name "OneDrive" -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 1
+            $OneDriveSetup32 = "$env:SystemRoot\System32\OneDriveSetup.exe"
+            $OneDriveSetup64 = "$env:SystemRoot\SysWOW64\OneDriveSetup.exe"
+            if (Test-Path $OneDriveSetup32) { Start-Process $OneDriveSetup32 "/uninstall" -Wait -ErrorAction SilentlyContinue }
+            if (Test-Path $OneDriveSetup64) { Start-Process $OneDriveSetup64 "/uninstall" -Wait -ErrorAction SilentlyContinue }
+            Start-Sleep -Seconds 2
+            $oneDriveDirs = @(
+                "$env:SystemDrive\OneDriveTemp"
+                "$env:USERPROFILE\OneDrive"
+                "$env:USERPROFILE\AppData\Local\Microsoft\OneDrive"
+                "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\OneDrive.lnk"
+                "$env:ProgramData\Microsoft OneDrive"
+                "$env:LOCALAPPDATA\Microsoft\OneDrive"
+                "$env:ProgramFiles\Microsoft OneDrive"
+                "$env:ProgramFiles(x86)\Microsoft OneDrive"
+                "$env:SystemDrive\ProgramData\Microsoft OneDrive"
+                "$env:USERPROFILE\AppData\Roaming\Microsoft\OneDrive"
+            )
+            foreach ($dir in $oneDriveDirs) { if (Test-Path $dir) { Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue } }
+            
+            Remove-RegistryKey -Path "HKCU:\Software\Microsoft\OneDrive"
+            Remove-RegistryKey -Path "HKLM:\SOFTWARE\Microsoft\OneDrive"
+            Remove-RegistryKey -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\OneDrive"
+            Get-ScheduledTask | Where-Object {$_.TaskName -like "*OneDrive*"} | Unregister-ScheduledTask -Confirm:$false -ErrorAction SilentlyContinue
+        } catch {}
+    }
+
+    function Remove-Teams {
+        try {
+            Stop-Process -Name "Teams" -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 1
+            Get-AppxPackage -AllUsers -Name "*Teams*" | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+            Get-AppxProvisionedPackage -Online | Where-Object DisplayName -like "*Teams*" | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+            
+            $teamsDirs = @(
+                "$env:LOCALAPPDATA\Microsoft\Teams"
+                "$env:APPDATA\Microsoft\Teams"
+                "$env:APPDATA\Teams"
+                "$env:ProgramData\Microsoft Teams"
+                "$env:USERPROFILE\AppData\Local\Microsoft\Teams"
+                "$env:USERPROFILE\AppData\Roaming\Microsoft\Teams"
+                "$env:ProgramFiles\Teams Installer"
+                "$env:ProgramFiles(x86)\Teams Installer"
+            )
+            foreach ($dir in $teamsDirs) { if (Test-Path $dir) { Remove-Item $dir -Recurse -Force -ErrorAction SilentlyContinue } }
+        } catch {}
+    }
+
+    function Remove-LinkedIn {
+        try {
+            Get-AppxPackage -AllUsers | Where-Object { $_.Name -like "*LinkedIn*" } | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+            Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -like "*LinkedIn*" } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+            $profiles = Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch '^(Default|Public|All Users)$' }
+            foreach ($profile in $profiles) {
+                $desktop = Join-Path $profile.FullName "Desktop"
+                if (Test-Path $desktop) {
+                    Get-ChildItem -Path $desktop -Filter "*LinkedIn*.lnk" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+                }
+            }
+        } catch {}
+    }
+
+    function Remove-Xbox {
+        try {
+            $xboxApps = @(
+                "Microsoft.Xbox.TCUI"
+                "Microsoft.XboxApp"
+                "Microsoft.XboxGameCallableUI"
+                "Microsoft.XboxGamingOverlay"
+                "Microsoft.XboxIdentityProvider"
+                "Microsoft.XboxSpeechToTextOverlay"
+                "Microsoft.GamingApp"
+            )
+            foreach ($app in $xboxApps) { Remove-AppxSafe -AppName $app }
         } catch {}
     }
 
@@ -351,6 +438,11 @@ public class Wallpaper {
 
     Remove-CrapApps
     Optimize-Services
+    Remove-EdgeCompletely
+    Remove-OneDrive
+    Remove-Teams
+    Remove-LinkedIn
+    Remove-Xbox
     Disable-Telemetry
     Set-Wallpaper
     Create-ToolboxShortcut
@@ -606,6 +698,24 @@ function Apply-RegistryTweaks {
 
     Set-RegistryForce -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA" -Type "DWord" -Value 3
 
+    Set-RegistryForce -Path "HKCU:\Control Panel\Desktop" -Name "UserPreferencesMask" -Type "Binary" -Value ([byte[]](0x90,0x12,0x03,0x80,0x10,0x00,0x00,0x00))
+    Set-RegistryForce -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Type "String" -Value "0"
+    Set-RegistryForce -Path "HKCU:\Control Panel\Desktop" -Name "HungAppTimeout" -Type "String" -Value "1000"
+    Set-RegistryForce -Path "HKCU:\Control Panel\Desktop" -Name "WaitToKillAppTimeout" -Type "String" -Value "2000"
+    Set-RegistryForce -Path "HKCU:\Control Panel\Desktop" -Name "LowLevelHooksTimeout" -Type "String" -Value "1000"
+    Set-RegistryForce -Path "HKCU:\Control Panel\Desktop" -Name "ForegroundLockTimeout" -Type "DWord" -Value 0
+    Set-RegistryForce -Path "HKCU:\Control Panel\Desktop\WindowMetrics" -Name "MinAnimate" -Type "String" -Value "0"
+    Set-RegistryForce -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "DisallowShaking" -Type "DWord" -Value 1
+    Set-RegistryForce -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "EnableBalloonTips" -Type "DWord" -Value 0
+    Set-RegistryForce -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarAnimations" -Type "DWord" -Value 0
+    Set-RegistryForce -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "EnableAeroPeek" -Type "DWord" -Value 0
+    Set-RegistryForce -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "AlwaysHibernateThumbnails" -Type "DWord" -Value 0
+    Set-RegistryForce -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "EnableWindowColorization" -Type "DWord" -Value 0
+    Set-RegistryForce -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "Composition" -Type "DWord" -Value 0
+    Set-RegistryForce -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "CompositionPolicy" -Type "DWord" -Value 0
+    Set-RegistryForce -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "SystemResponsiveness" -Type "DWord" -Value 0
+    Set-RegistryForce -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile" -Name "NetworkThrottlingIndex" -Type "DWord" -Value 0xFFFFFFFF
+
     Remove-RegistryKeyForce -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}"
     Remove-RegistryKeyForce -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{f874310e-b6b7-47dc-bc84-b9e6b38f5903}"
     Remove-RegistryKeyForce -Path "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{e88865ea-0e1c-4e20-9aa6-edcd0212c87c}"
@@ -830,7 +940,6 @@ function Apply-RegistryTweaks {
 
     $commonFlags = @("--exact","--silent","--accept-package-agreements","--accept-source-agreements","--source","winget")
 
-    & $winget install --id Brave.Brave @commonFlags
     & $winget install --id Nilesoft.Shell @commonFlags
 
     return $true
