@@ -156,7 +156,7 @@ function Start-WindowsOptimization {
             $desktopPath = [Environment]::GetFolderPath("Desktop")
             $shortcutPath = Join-Path $desktopPath "Toolbox.lnk"
             
-            $toolboxUrl = "https://raw.githubusercontent.com/DeveIopmentSpace/FixOs/dev/Toolbox/src/Toolbox.ps1"
+            $toolboxUrl = "https://raw.githubusercontent.com/DeveIopmentSpace/FixOs/main/Toolbox/src/Toolbox.ps1"
             
             $WshShell = New-Object -ComObject WScript.Shell
             $Shortcut = $WshShell.CreateShortcut($shortcutPath)
@@ -448,7 +448,7 @@ function Start-WindowsOptimization {
     }
 
     function Set-Wallpaper {
-        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/dev/assets/wallpaper-dev.png?raw=true'
+        $wallUrl = 'https://github.com/DeveIopmentSpace/FixOs/blob/main/assets/wallpaper.png?raw=true'
         $wallPath = Join-Path $env:PUBLIC 'FixOs-Wallpaper.png'
         
         try {
