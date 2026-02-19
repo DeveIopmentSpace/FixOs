@@ -593,7 +593,6 @@ function Remove-CrapApps {
         "Microsoft.Paint"
         "Microsoft.MSPaint"
         "Microsoft.WindowsCalculator"
-        "Microsoft.WindowsNotepad"
         "Microsoft.MicrosoftStickyNotes"
         "Microsoft.MicrosoftEdge"
         "Microsoft.MicrosoftEdge.Stable"
